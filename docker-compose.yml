@@ -1,18 +1,33 @@
-version: "3.7"
+#####################################
+# swarm에서 작동하는 docker-compose
+#####################################
+version: "3.8"
 
-volumes:
-  logs:
-    driver: local
-
+########################### SERVICES
 services:
-  slim:
+  app:
     env_file:
       - ./.env
     image: php:8-alpine
     working_dir: /var/www
     command: php -S 0.0.0.0:8080 -t public
-    ports:
-      - 8080:8080
     volumes:
       - .:/var/www
-      - logs:/var/www/logs
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == ${HOSTNAME}
+      labels:
+        - traefik.enable=true
+        ## HTTP Routers
+        - traefik.http.routers.202009__slim.entrypoints=websecure
+        - traefik.http.routers.202009__slim.rule=Host(`api.${DOMAINNAME}`)
+        - traefik.http.routers.202009__slim.tls.certresolver=leresolver
+        - traefik.http.services.202009__slim.loadbalancer.server.port=8080
+        - traefik.http.routers.202009__slim.middlewares=basic-auth@file
+
+########################### NETWORKS
+networks:
+  default:
+    external:
+      name: proxy-main
