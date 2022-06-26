@@ -8,26 +8,24 @@ services:
   app:
     env_file:
       - ./.env
+    networks:
+      - traefik_proxy
+      - default
     image: php:8-alpine
     working_dir: /var/www
     command: php -S 0.0.0.0:8080 -t public
     volumes:
       - .:/var/www
-    deploy:
-      placement:
-        constraints:
-          - node.hostname == ${HOSTNAME}
-      labels:
-        - traefik.enable=true
-        ## HTTP Routers
-        - traefik.http.routers.202009__slim.entrypoints=websecure
-        - traefik.http.routers.202009__slim.rule=Host(`api.${DOMAINNAME}`)
-        - traefik.http.routers.202009__slim.tls.certresolver=leresolver
-        - traefik.http.services.202009__slim.loadbalancer.server.port=8080
-        - traefik.http.routers.202009__slim.middlewares=basic-auth@file
+    labels:
+      - traefik.enable=true
+      ## HTTP Routers
+      - traefik.http.routers.202009__slim.entrypoints=websecure
+      - traefik.http.routers.202009__slim.rule=Host(`api.${DOMAINNAME}`)
+      - traefik.http.routers.202009__slim.tls.certresolver=leresolver
+      - traefik.http.services.202009__slim.loadbalancer.server.port=8080
+      - traefik.http.routers.202009__slim.middlewares=basic-auth@file
 
 ########################### NETWORKS
 networks:
-  default:
-    external:
-      name: proxy-main
+  traefik_proxy:
+    external: true
